@@ -16,7 +16,7 @@ proc main {} {
 	set delay_word 200
 	set delay_line 1000
 
-	set fh [open $filename r]
+	set fh [open [file join [file dirname [info script]] $filename] r]
 	while {1} {
 		set buf [string trim [gets $fh]]
 
