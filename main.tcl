@@ -1,5 +1,7 @@
 #!/usr/local/bin/tclsh8.5
 
+package require Tclx
+
 proc chr_is_delimeter {chr} {
 	if {$chr eq " " || $chr eq "-"} {
 		return 1
@@ -16,12 +18,13 @@ proc main {} {
 	set delay_word 200
 	set delay_line 1000
 
-	set fh [open [file join [file dirname [info script]] $filename] r]
-	while {1} {
-		set buf [string trim [gets $fh]]
+	set filebuf [read_file [file join [file dirname [info script]] $filename]]
+
+	foreach buf [split $filebuf "\n"] {
+		set buf [string trim $buf]
 
 		if {$buf eq ""} {
-			puts ""
+			puts "\r"
 		} else {
 			set lpos	0
 			set buflen	[string length $buf]
@@ -54,16 +57,11 @@ proc main {} {
 					set lpos [expr $rpos + 1]
 				}
 			}
-			puts ""
+			puts "\r"
 
 			if {$last_output ne "delay"} {
 				waitfor $delay_line
 			}
-		}
-
-		if {[eof $fh]} {
-			close $fh
-			break
 		}
 	}
 
