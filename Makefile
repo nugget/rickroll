@@ -1,6 +1,6 @@
 LIB?=	/usr/local/lib
 BIN?=	/usr/local/bin
-TCLSH?=	tclsh8.5
+TCLSH?=	tclsh8.6
 
 INSTALL_FILES=main.tcl lyrics.dat
 PROGNAME=rickroll
