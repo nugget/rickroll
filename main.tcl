@@ -18,6 +18,9 @@ proc main {} {
 	set delay_word 200
 	set delay_line 1000
 
+	signal ignore int
+	signal ignore quit
+
 	set filebuf [read_file [file join [file dirname [info script]] $filename]]
 
 	foreach buf [split $filebuf "\n"] {
