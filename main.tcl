@@ -31,14 +31,14 @@ proc main {} {
 		} else {
 			set lpos	0
 			set buflen	[string length $buf]
-			set lastchr [expr $buflen - 1]
+			set lastchr [expr {$buflen - 1}]
 
 			for {set rpos 0} {$rpos < $buflen} {incr rpos} {
 				set chr [string range $buf $rpos $rpos]
 
 				if {[chr_is_delimeter $chr] || $rpos == $lastchr} {
 					if {[chr_is_delimeter $chr]} {
-						set end [expr $rpos - 1]
+						set end [expr {$rpos - 1}]
 					} else {
 						set end $rpos
 					}
@@ -57,7 +57,7 @@ proc main {} {
 						waitfor $delay_word
 					}
 
-					set lpos [expr $rpos + 1]
+					set lpos [expr {$rpos + 1}]
 				}
 			}
 			puts "\r"
