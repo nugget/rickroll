@@ -248,8 +248,7 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		"delayWord", delayWord,
 		"delayLine", delayLine,
 		"commit", commit,
-		"buildDate", buildDate,
-		"dirty", dirty)
+		"buildDate", buildDate)
 
 	err := LaunchTelnetServer(ctx)
 	if err != nil {
