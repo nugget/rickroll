@@ -241,7 +241,7 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	setupLogger(ctx, stdout)
 
-	commit, buildDate, dirty := getBuildInfo()
+	commit, buildDate, _ := getBuildInfo()
 
 	logger.Info("Starting Rickroll",
 		"filename", filename,
