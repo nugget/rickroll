@@ -26,20 +26,27 @@ var (
 	target      string
 	matchLogger *slog.Logger
 
-	filename  string        = "/data/lyrics.dat"
+	filename  string        = "lyrics.dat"
 	delayWord time.Duration = 200 * time.Millisecond
 	delayLine time.Duration = 1000 * time.Millisecond
+
+	lyricsBytes []byte
 )
 
-func LyricsFromFile(filename string) (r *bufio.Reader, err error) {
-	b, err := os.ReadFile(filename)
+func LoadLyricsFromFile(filename string) (err error) {
+	lyricsBytes, err = os.ReadFile(filename)
 	if err != nil {
-		return r, err
+		return err
 	}
 
-	r = bufio.NewReader(bytes.NewBuffer(b))
+	logger.Info("loaded lyrics from file", "file", filename, "bytes", len(lyricsBytes))
 
-	logger.Info("loaded lyrics from file", "file", filename, "bytes", len(b))
+	return nil
+}
+
+func LyricsReader() (r *bufio.Reader, err error) {
+	r = bufio.NewReader(bytes.NewBuffer(lyricsBytes))
+
 	return r, nil
 }
 
@@ -168,7 +175,7 @@ func SingSong(r *bufio.Reader, o io.Writer) error {
 }
 
 func SessionHandler(ctx context.Context, stdout io.Writer) error {
-	r, err := LyricsFromFile(filename)
+	r, err := LyricsReader()
 	if err != nil {
 		return err
 	}
@@ -185,18 +192,8 @@ type internalTelnetHandler struct{}
 
 var TelnetHandler telnet.Handler = internalTelnetHandler{}
 
-func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
-	conn := ctx.Conn()
-	remoteString := conn.RemoteAddr().String()
-
-	startTime := time.Now()
-
-	var (
-		remoteAddr string
-		remotePort string
-		remoteHost string
-		err        error
-	)
+func dnsLookup(remoteString string) (remoteAddr, remotePort, remoteHost string) {
+	var err error
 
 	remoteAddr, remotePort, err = net.SplitHostPort(remoteString)
 	if err != nil {
@@ -206,34 +203,50 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 
 		lookupSlice, err := net.LookupAddr(remoteAddr)
 		if err != nil {
-			logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", err)
+			logger.Debug("reverse dns for client not found", "remoteAddr", remoteAddr, "error", err)
 		}
 		if len(lookupSlice) > 0 {
 			remoteHost = lookupSlice[0]
 		} else {
-			logger.Info("no reverse dns found", "remoteAddr", remoteAddr, "lookupSlice", lookupSlice, "length", len(lookupSlice))
+			logger.Debug("no reverse dns found", "remoteAddr", remoteAddr, "lookupSlice", lookupSlice, "length", len(lookupSlice))
 		}
 	}
 
-	logger.Info("new connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
+	return remoteAddr, remotePort, remoteHost
+}
+
+func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
+	var err error
+
+	conn := ctx.Conn()
+	defer conn.Close()
+
+	remoteString := conn.RemoteAddr().String()
+
+	remoteAddr, remotePort, remoteHost := dnsLookup(remoteString)
+
+	startTime := time.Now()
+
+	logger.Info("connection opened", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
 
 	c := context.Background()
 	err = SessionHandler(c, w)
-	if err != nil {
-		logger.Error("session handler error", "error", err)
-	}
-
 	duration := time.Now().Sub(startTime)
-	logger.Info("closing connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort, "duration", duration)
+	if err != nil {
+		logger.Info("connection error", "error", err, "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort, "duration", duration)
+		return
+	}
 
 	err = conn.Close()
 	if err != nil {
-		logger.Error("unable to close connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
+		logger.Info("connection lost", "error", err, "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort, "duration", duration)
+	} else {
+		logger.Info("connection closed", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort, "duration", duration)
 	}
 }
 
 func LaunchTelnetServer(ctx context.Context) error {
-	logger.Info("Starting telnet server")
+	logger.Info("starting telnet server")
 
 	err := telnet.ListenAndServe(":23", TelnetHandler)
 	if err != nil {
@@ -243,7 +256,7 @@ func LaunchTelnetServer(ctx context.Context) error {
 	return nil
 }
 
-func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) error {
+func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) (err error) {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 
@@ -251,14 +264,19 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	commit, buildDate, _ := getBuildInfo()
 
-	logger.Info("Starting Rickroll",
+	logger.Info("starting rickrolld",
 		"filename", filename,
 		"delayWord", delayWord,
 		"delayLine", delayLine,
 		"commit", commit,
 		"buildDate", buildDate)
 
-	err := LaunchTelnetServer(ctx)
+	err = LoadLyricsFromFile(filename)
+	if err != nil {
+		return err
+	}
+
+	err = LaunchTelnetServer(ctx)
 	if err != nil {
 		return err
 	}
