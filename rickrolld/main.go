@@ -201,7 +201,7 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 	} else {
 		var lookupSlice []string
 
-		lookupSlice, err := net.LookupHost(remoteAddr)
+		lookupSlice, err := net.LookupAddr(remoteAddr)
 		remoteHost = lookupSlice[0]
 		if err != nil {
 			logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", err)
