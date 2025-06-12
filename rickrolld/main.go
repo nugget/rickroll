@@ -73,18 +73,44 @@ func singLine(o io.Writer, line string) error {
 		return nil
 	}
 
+	logger.Debug("singing line", "line", line)
+
 	// Sing a line of the lyrics with delays for embedded timing commands
 	words := strings.Split(line, " ")
 
+	wordCount := len(words) - 1
+
+	c := words[wordCount][0]
+	if c == 123 {
+		// The last "word" of the line is a delay command, so we
+		// don't want to pad with a space after the second-to-last
+		// word (which is really the last word)
+		wordCount = wordCount - 1
+	}
+
 	for i, w := range words {
-		addPadding, err := singWord(o, w)
-		if err != nil {
-			return err
-		}
-		if addPadding && i < (len(words)-1) {
-			// That word calls for padding
-			//
-			fmt.Fprintf(o, " ")
+		syllables := strings.Split(w, "-")
+		if len(syllables) > 1 {
+			logger.Debug("Syllables detected!", "syllables", syllables)
+
+			for _, s := range syllables {
+				singWord(o, s)
+			}
+
+			if i < (len(words) - 1) {
+				fmt.Fprintf(o, " ")
+			}
+		} else {
+			addPadding, err := singWord(o, w)
+			if err != nil {
+				return err
+			}
+			logger.Debug("end of word", "w", w, "addPadding", addPadding, "i", i, "wordCount", wordCount)
+			if addPadding && i < wordCount {
+				// That word calls for padding
+				//
+				fmt.Fprintf(o, " ")
+			}
 		}
 	}
 
@@ -95,6 +121,7 @@ func singLine(o io.Writer, line string) error {
 }
 
 func singWord(o io.Writer, w string) (bool, error) {
+	logger.Debug("singing word", "w", w)
 	if processDelay(w) {
 		// This word was a delay command, no further output
 		return false, nil
