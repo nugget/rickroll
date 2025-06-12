@@ -70,7 +70,7 @@ func processDelay(w string) bool {
 }
 
 func newLine(o io.Writer) {
-	fmt.Fprintf(o, "\n")
+	fmt.Fprintf(o, "\r\n")
 }
 
 func singLine(o io.Writer, line string) error {
