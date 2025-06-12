@@ -71,7 +71,7 @@ buildx:
 release: buildx
 	@echo "# making: prod"
 	docker buildx use $(builder)
-	docker buildx build $(oci-build-labels) -t $(image):$(prodtag) $(FROM_IMAGE_TAGARGS) --platform=$(platforms) --push . 
+	docker buildx build $(oci-build-labels) -t $(image):$(prodtag) -t $(image):2 -t $(image):2.0 -t $(image):2.0.0 -t $(image):2.0 --platform=$(platforms) --push . 
 	docker buildx rm $(builder)
 	docker pull $(image):$(prodtag)
 	docker inspect $(image):$(prodtag) | jq '.[0].Config.Labels' 
