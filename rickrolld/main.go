@@ -189,6 +189,8 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 	conn := ctx.Conn()
 	remoteString := conn.RemoteAddr().String()
 
+	startTime := time.Now()
+
 	var (
 		remoteAddr string
 		remotePort string
@@ -203,9 +205,13 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 		var lookupSlice []string
 
 		lookupSlice, err := net.LookupAddr(remoteAddr)
-		remoteHost = lookupSlice[0]
 		if err != nil {
 			logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", err)
+		}
+		if len(lookupSlice) > 0 {
+			remoteHost = lookupSlice[0]
+		} else {
+			logger.Info("no reverse dns found", "remoteAddr", remoteAddr, "lookupSlice", lookupSlice, "length", len(lookupSlice))
 		}
 	}
 
@@ -217,7 +223,9 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 		logger.Error("session handler error", "error", err)
 	}
 
-	logger.Info("closing connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
+	duration := time.Now().Sub(startTime)
+	logger.Info("closing connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort, "duration", duration)
+
 	err = conn.Close()
 	if err != nil {
 		logger.Error("unable to close connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
