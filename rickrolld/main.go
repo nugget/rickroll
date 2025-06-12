@@ -186,25 +186,40 @@ var TelnetHandler telnet.Handler = internalTelnetHandler{}
 
 func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
 	conn := ctx.Conn()
-	remoteAddr := conn.RemoteAddr()
+	remoteString := conn.RemoteAddr().String()
 
-	hostname, dnsErr := net.LookupHost(remoteAddr.String())
-	if dnsErr != nil {
-		logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", dnsErr)
+	var (
+		remoteAddr string
+		remotePort string
+		remoteHost string
+		err        error
+	)
+
+	remoteAddr, remotePort, err = net.SplitHostPort(remoteString)
+	if err != nil {
+		logger.Info("unable to split host/port from remoteAddr", "error", err, "remoteString", remoteString)
+	} else {
+		var lookupSlice []string
+
+		lookupSlice, err := net.LookupHost(remoteAddr)
+		remoteHost = lookupSlice[0]
+		if err != nil {
+			logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", err)
+		}
 	}
 
-	logger.Info("new connection", "hostname", hostname, "remoteAddr", remoteAddr)
+	logger.Info("new connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
 
 	c := context.Background()
-	err := SessionHandler(c, w)
+	err = SessionHandler(c, w)
 	if err != nil {
 		logger.Error("session handler error", "error", err)
 	}
 
-	logger.Info("closing connection", "hostname", hostname, "remoteAddr", remoteAddr)
+	logger.Info("closing connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
 	err = conn.Close()
 	if err != nil {
-		logger.Error("unable to close connection", "hostname", hostname, "remoteAddr", remoteAddr, "error", err)
+		logger.Error("unable to close connection", "remoteHost", remoteHost, "remoteAddr", remoteAddr, "remotePort", remotePort)
 	}
 }
 
