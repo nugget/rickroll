@@ -20,29 +20,46 @@ back in the olden days of UNIX before the rise of Linux and containers.
 
 It was a different world [back then](https://github.com/nugget/rickroll/tree/02f031511578bc33fd5b3df10f857620042bc857).
 
+It's old enough to have been 3-Clause BSD licensed. I remember I had strong
+feelings about that at the time. I changed it to MIT as part of the rewrite.
+
 # Version 2.0 Rewrite
 
-In June 2025 I rewrote the sever in Golang and got it containerized for easy
-deployment in a manner that's better aligned with current best practices.
+In June 2025 I rewrote the server in Golang and got it containerized for an easier
+deployment in modern infrastructure.
 
-This service (and docker container) will bind port 23 and listen as a telnet server.
-Incoming connections will be handled and enjoy the song of our people.
+This service will bind port 23 and listen as a telnet server. Incoming
+connections will be textually serenaded.
 
-# Installation
+# Local Operation
 
-You can run it locally from this repo if you have a relatively modern Golang installed.
+You can build and run locally straight from this repo if you have Golang installed.
 
 ```sh
 make run
 ```
 
-Or you can run my published [rickrolld](https://hub.docker.com/r/nugget/rickrolld) container:
+# Containerized
+
+Images are on dockerhub at [nugget/rickrolld](https://hub.docker.com/r/nugget/rickrolld)
 
 ```sh
 docker run -p 23:23 nugget/rickrolld
 ```
 
 Or use the `docker-compse.yml` file from this repo.
+
+# Building the container itself
+
+You can build/tag the rickrolld container locally tagged as rickrolld:dev
+
+```sh
+make container
+```
+
+```sh
+make runcontainer
+```
 
 [Rickrolling]: https://en.wikipedia.org/wiki/Rickrolling
 [inetd]: https://man.freebsd.org/cgi/man.cgi?inetd
