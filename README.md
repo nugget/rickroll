@@ -2,6 +2,9 @@
 
 You can `telnet macnugget.org` to see it in action.
 
+If your host doesn't have the telnet client installed, good for you. You can also
+use Netcat to access the service with the command `nc macnugget.org 23`
+
 # What is this? Whose fault is this?
 
 I honestly don't remember what was going through my head in 2013 when I wrote
