@@ -37,7 +37,7 @@ make run
 Or you can run my published [rickrolld](https://hub.docker.com/r/nugget/rickrolld) container:
 
 ```sh
-docker run nugget/rickrolld
+docker run -p 23:23 nugget/rickrolld
 ```
 
 Or use the `docker-compse.yml` file from this repo.
