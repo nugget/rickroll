@@ -24,13 +24,20 @@ oci-build-labels?=\
 	--build-arg OCI_IMAGE_VERSION=$(OCI_IMAGE_VERSION) \
 	--build-arg OCI_IMAGE_REVISION=$(OCI_IMAGE_REVISION) 
 
-.PHONY: mod go-telnet-local localdev productiondev rickrolld run container runcontainer clean buildx release
+oci-version-point=$(shell echo $(OCI_IMAGE_VERSION) | cut -f 2 -d v | cut -f 1 -d '-')
+oci-version-minor=$(shell echo $(oci-version-point) | cut -f 1-2 -d .)
+oci-version-major=$(shell echo $(oci-version-point) | cut -f 1 -d .)
+
+.PHONY: version mod go-telnet-local localdev productiondev rickrolld run container runcontainer clean buildx release
+
+version:
+	@echo "OCI Version: $(OCI_IMAGE_VERSION)"
 
 mod:
 	go get -u github.com/nugget/go-telnet
 	go mod tidy
 	go mod verify
-	git diff go.mod go.sum && git commit go.mod go.sum -m "make mod"
+	git diff go.mod go.sum || git commit go.mod go.sum -m "make mod"
 
 go-telnet-local:
 	-git clone git@github.com:nugget/go-telnet.git
@@ -62,16 +69,21 @@ clean:
 	-docker buildx rm $(builder)
 	@echo
 
-buildx:
+buildx: mod
 	docker buildx create --name $(builder)
 	docker buildx use $(builder)
 	docker buildx install
 	@echo
 
-release: buildx
+release: version buildx
 	@echo "# making: prod"
 	docker buildx use $(builder)
-	docker buildx build $(oci-build-labels) -t $(image):$(prodtag) -t $(image):2 -t $(image):2.0 -t $(image):2.0.0 -t $(image):2.0 --platform=$(platforms) --push . 
+	docker buildx build $(oci-build-labels) \
+		-t $(image):$(prodtag) \
+		-t $(image):$(oci-version-major) \
+		-t $(image):$(oci-version-minor) \
+		-t $(image):$(oci-version-point) \
+		--platform=$(platforms) --push . 
 	docker buildx rm $(builder)
 	docker pull $(image):$(prodtag)
 	docker inspect $(image):$(prodtag) | jq '.[0].Config.Labels' 
