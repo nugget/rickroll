@@ -3,6 +3,11 @@ services:
     image: nugget/rickrolld:latest
     container_name: rickrolld
     restart: unless-stopped
-    network_mode: "host"
     ports:
       - "23:23"
+    networks:
+      - default
+
+networks:
+  default:
+    enable_ipv6: true
