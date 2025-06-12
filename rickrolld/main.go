@@ -267,7 +267,9 @@ func getBuildInfo() (commit, buildDate string, dirty bool) {
 	if !ok {
 		return
 	}
+
 	dirty = false
+
 	for _, setting := range buildInfo.Settings {
 		switch setting.Key {
 		case "vcs.revision":
