@@ -9,17 +9,21 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 )
 
 var (
-	filename  string = "../lyrics.dat"
-	delayWord int    = 200
-	delayLine int    = 1000
-
 	logger      *slog.Logger
 	logLevel    *slog.LevelVar
 	target      string
 	matchLogger *slog.Logger
+
+	filename  string        = "../lyrics.dat"
+	delayWord time.Duration = 200 * time.Millisecond
+	delayLine time.Duration = 1000 * time.Millisecond
 )
 
 func LyricsFromFile(filename string) (r *bufio.Reader, err error) {
@@ -32,10 +36,77 @@ func LyricsFromFile(filename string) (r *bufio.Reader, err error) {
 	return r, nil
 }
 
-func singLine(o io.Writer, line string) error {
-	fmt.Fprintln(o, "# LINE", line)
+func processDelay(w string) bool {
+	// Set up our command matching regexps
+	//
+	match := regexp.MustCompile(`{(?P<msec>\d+)}`)
+
+	if !match.MatchString(w) {
+		// This word is not a delay command, carry on
+		//
+		return false
+	}
+
+	// Pull the number from the matched string
+	//
+	msecString := match.FindStringSubmatch(w)[1]
+	msec, err := strconv.ParseInt(msecString, 10, 64)
+	if err != nil {
+		logger.Info("unable to parse delay command, treating like a regular word", "word", w)
+		return false
+	}
+
+	logger.Debug("delay command detected", "msec", msec)
+	time.Sleep(time.Duration(msec) * time.Millisecond)
+
+	return true
+}
+
+func newLine(o io.Writer) {
 	fmt.Fprintf(o, "\n")
+}
+
+func singLine(o io.Writer, line string) error {
+	if len(line) == 0 {
+		newLine(o)
+		return nil
+	}
+
+	// Sing a line of the lyrics with delays for embedded timing commands
+	words := strings.Split(line, " ")
+
+	for i, w := range words {
+		addPadding, err := singWord(o, w)
+		if err != nil {
+			return err
+		}
+		if addPadding && i < (len(words)-1) {
+			// That word calls for padding
+			//
+			fmt.Fprintf(o, " ")
+		}
+	}
+
+	time.Sleep(delayLine)
+	newLine(o)
+
 	return nil
+}
+
+func singWord(o io.Writer, w string) (bool, error) {
+	if processDelay(w) {
+		// This word was a delay command, no further output
+		return false, nil
+	}
+
+	_, err := fmt.Fprintf(o, "%s", w)
+	if err != nil {
+		return false, err
+	}
+
+	time.Sleep(delayWord)
+
+	return true, nil
 }
 
 func SingSong(r *bufio.Reader, o io.Writer) error {
@@ -51,14 +122,12 @@ func SingSong(r *bufio.Reader, o io.Writer) error {
 			return err
 		}
 
-		if len(line) == 0 {
-			fmt.Fprintf(o, "\n")
-		} else {
-			err = singLine(o, string(line))
-			if err != nil {
-				return err
-			}
+		err = singLine(o, string(line))
+		if err != nil {
+			return err
 		}
+
+		time.Sleep(delayLine)
 
 	}
 	return nil
@@ -69,7 +138,11 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 	defer stop()
 
 	setupLogger(ctx, stdout)
-	logger.Info("Starting Rickroll")
+
+	logger.Info("Starting Rickroll",
+		"filename", filename,
+		"delayWord", delayWord,
+		"delayLine", delayLine)
 
 	r, err := LyricsFromFile(filename)
 	if err != nil {
