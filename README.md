@@ -18,6 +18,8 @@ enviroment to host a Tcl script which relied on [inetd], [tcpwrappers], and
 the code remained as an archeological examination of how we used to do things
 back in the olden days of UNIX before the rise of Linux and containers.
 
+It was a different world [back then](https://github.com/nugget/rickroll/tree/02f031511578bc33fd5b3df10f857620042bc857).
+
 # Version 2.0 Rewrite
 
 In June 2025 I rewrote the sever in Golang and got it containerized for easy
