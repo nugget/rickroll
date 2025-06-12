@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 	"regexp"
@@ -15,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/reiver/go-telnet"
+	"github.com/nugget/go-telnet"
 )
 
 var (
@@ -24,7 +25,7 @@ var (
 	target      string
 	matchLogger *slog.Logger
 
-	filename  string        = "../lyrics.dat"
+	filename  string        = "lyrics.dat"
 	delayWord time.Duration = 200 * time.Millisecond
 	delayLine time.Duration = 1000 * time.Millisecond
 )
@@ -173,27 +174,42 @@ func SessionHandler(ctx context.Context, stdout io.Writer) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
-var TelnetHandler telnet.Handler = internalTelnetHandler{}
-
 type internalTelnetHandler struct{}
 
+var TelnetHandler telnet.Handler = internalTelnetHandler{}
+
 func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
-	logger.Info("TelnetHandler Called", "ctx", ctx)
+	conn := ctx.Conn()
+	remoteAddr := conn.RemoteAddr()
+
+	hostname, dnsErr := net.LookupHost(remoteAddr.String())
+	if dnsErr != nil {
+		logger.Info("reverse dns for client not found", "remoteAddr", remoteAddr, "error", dnsErr)
+	}
+
+	logger.Info("new connection", "hostname", hostname, "remoteAddr", remoteAddr)
 
 	c := context.Background()
 	err := SessionHandler(c, w)
 	if err != nil {
 		logger.Error("session handler error", "error", err)
 	}
+
+	logger.Info("closing connection", "hostname", hostname, "remoteAddr", remoteAddr)
+	err = conn.Close()
+	if err != nil {
+		logger.Error("unable to close connection", "hostname", hostname, "remoteAddr", remoteAddr, "error", err)
+	}
 }
 
 func LaunchTelnetServer(ctx context.Context) error {
 	logger.Info("Starting telnet server")
 
-	err := telnet.ListenAndServe(":5555", TelnetHandler)
+	err := telnet.ListenAndServe(":23", TelnetHandler)
 	if err != nil {
 		return err
 	}
