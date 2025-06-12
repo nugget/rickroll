@@ -1,4 +1,4 @@
-github.com/nugget/go-telnet v0.0.0-20250612151728-c456cf02dbd8 h1:E3oVqenP5e5IIjd4qdUduXqOUkhjJYBVM/k2yuLjwyc=
-github.com/nugget/go-telnet v0.0.0-20250612151728-c456cf02dbd8/go.mod h1:SDjQ6DLok9DwPgarG1YdxqWVITIFJySnTOy/XqAZ188=
+github.com/nugget/go-telnet v0.0.0-20250612160212-68beb70e6b93 h1:X1ZOehH4mwpjubLI7V3l6Ko7kjy7GF2j4bE5BFohb2I=
+github.com/nugget/go-telnet v0.0.0-20250612160212-68beb70e6b93/go.mod h1:SDjQ6DLok9DwPgarG1YdxqWVITIFJySnTOy/XqAZ188=
 github.com/reiver/go-oi v1.0.0 h1:nvECWD7LF+vOs8leNGV/ww+F2iZKf3EYjYZ527turzM=
 github.com/reiver/go-oi v1.0.0/go.mod h1:RrDBct90BAhoDTxB1fenZwfykqeGvhI6LsNfStJoEkI=
