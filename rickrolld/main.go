@@ -14,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/reiver/go-telnet"
 )
 
 var (
@@ -161,6 +163,33 @@ func SingSong(r *bufio.Reader, o io.Writer) error {
 	return nil
 }
 
+func SessionHandler(ctx context.Context, stdout io.Writer) error {
+	r, err := LyricsFromFile(filename)
+	if err != nil {
+		return err
+	}
+
+	err = SingSong(r, stdout)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+var TelnetHandler telnet.Handler = internalTelnetHandler{}
+
+type internalTelnetHandler struct{}
+
+func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
+	logger.Info("TelnetHandler Called", "ctx", ctx)
+
+	c := context.Background()
+	err := SessionHandler(c, w)
+	if err != nil {
+		logger.Error("session handler error", "error", err)
+	}
+}
+
 func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) error {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
@@ -172,12 +201,8 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		"delayWord", delayWord,
 		"delayLine", delayLine)
 
-	r, err := LyricsFromFile(filename)
-	if err != nil {
-		return err
-	}
-
-	err = SingSong(r, stdout)
+	logger.Info("Starting telnet server")
+	err := telnet.ListenAndServe(":5555", TelnetHandler)
 	if err != nil {
 		return err
 	}
