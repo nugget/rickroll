@@ -22,35 +22,23 @@ var (
 	matchLogger *slog.Logger
 )
 
-func singLine(line string) error {
-	fmt.Println("# LINE", line)
+func LyricsFromFile(filename string) (r *bufio.Reader, err error) {
+	b, err := os.ReadFile(filename)
+	if err != nil {
+		return r, err
+	}
 
-	fmt.Printf("\n")
+	r = bufio.NewReader(bytes.NewBuffer(b))
+	return r, nil
+}
+
+func singLine(o io.Writer, line string) error {
+	fmt.Fprintln(o, "# LINE", line)
+	fmt.Fprintf(o, "\n")
 	return nil
 }
 
-func setupLogger(ctx context.Context, stdout io.Writer) {
-	logLevel = new(slog.LevelVar)
-
-	handlerOptions := &slog.HandlerOptions{
-		Level: logLevel,
-	}
-	handler := slog.NewTextHandler(stdout, handlerOptions)
-	logger = slog.New(handler)
-}
-
-func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) error {
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
-	defer stop()
-
-	setupLogger(ctx, stdout)
-
-	b, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-
-	r := bufio.NewReader(bytes.NewBuffer(b))
+func SingSong(r *bufio.Reader, o io.Writer) error {
 	for {
 		line, prefix, err := r.ReadLine()
 		if err == io.EOF {
@@ -64,9 +52,9 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		}
 
 		if len(line) == 0 {
-			fmt.Printf("\n")
+			fmt.Fprintf(o, "\n")
 		} else {
-			err = singLine(string(line))
+			err = singLine(o, string(line))
 			if err != nil {
 				return err
 			}
@@ -74,6 +62,38 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	}
 	return nil
+}
+
+func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) error {
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
+	defer stop()
+
+	setupLogger(ctx, stdout)
+	logger.Info("Starting Rickroll")
+
+	r, err := LyricsFromFile(filename)
+	if err != nil {
+		return err
+	}
+
+	err = SingSong(r, stdout)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("Done")
+
+	return nil
+}
+
+func setupLogger(ctx context.Context, stdout io.Writer) {
+	logLevel = new(slog.LevelVar)
+
+	handlerOptions := &slog.HandlerOptions{
+		Level: logLevel,
+	}
+	handler := slog.NewTextHandler(stdout, handlerOptions)
+	logger = slog.New(handler)
 }
 
 // main does as little as we can get away with.
