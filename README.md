@@ -1,6 +1,6 @@
 # Trolling telnet.
 
-You can telnet macnugget.org to see it in action.
+You can `telnet macnugget.org` to see it in action.
 
 # What is this? Whose fault is this?
 
@@ -25,9 +25,17 @@ Incoming connections will be handled and enjoy the song of our people.
 
 # Installation
 
-You can build locally from this repo if you have a relatively modern Golang installation.
+You can run it locally from this repo if you have a relatively modern Golang installed.
 
-Or `docker run nugget/rickrolld`
+```sh
+make run
+```
+
+Or you can run my published container:
+
+```sh
+docker run nugget/rickrolld
+```
 
 Or use the `docker-compse.yml` file from this repo.
 
