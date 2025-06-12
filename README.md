@@ -31,7 +31,7 @@ You can run it locally from this repo if you have a relatively modern Golang ins
 make run
 ```
 
-Or you can run my published container:
+Or you can run my published [rickrolld](https://hub.docker.com/r/nugget/rickrolld) container:
 
 ```sh
 docker run nugget/rickrolld
