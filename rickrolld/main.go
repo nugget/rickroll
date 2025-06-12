@@ -183,11 +183,25 @@ type internalTelnetHandler struct{}
 func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Writer, r telnet.Reader) {
 	logger.Info("TelnetHandler Called", "ctx", ctx)
 
+	fmt.Printf("ctx: %+v", ctx)
+	fmt.Printf("w: %+v", w)
+	fmt.Printf("r: %+v", r)
+
 	c := context.Background()
 	err := SessionHandler(c, w)
 	if err != nil {
 		logger.Error("session handler error", "error", err)
 	}
+}
+
+func LaunchTelnetServer(ctx context.Context) error {
+	logger.Info("Starting telnet server")
+	err := telnet.ListenAndServe(":5555", TelnetHandler)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(string) string, args []string) error {
@@ -201,8 +215,7 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		"delayWord", delayWord,
 		"delayLine", delayLine)
 
-	logger.Info("Starting telnet server")
-	err := telnet.ListenAndServe(":5555", TelnetHandler)
+	err := LaunchTelnetServer(ctx)
 	if err != nil {
 		return err
 	}
