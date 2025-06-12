@@ -7,16 +7,22 @@ image=$(REGISTRY)/$(LIBRARY)/$(PROJECT)
 platforms=linux/amd64,linux/arm64
 
 BINARYNAME?=rickrolld
-PWD?=`pwd`
 
 prodtag=latest
 devtag=dev
 builder=builder-$(PROJECT)
 
+GIT ?= $(shell which git)
+PWD ?= $(shell pwd)
+
 OCI_IMAGE_CREATED="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
+OCI_IMAGE_REVISION?="$(shell $(GIT) rev-parse HEAD)"
+OCI_IMAGE_VERSION?="$(shell $(GIT) describe --always --long --tags --dirty)"
 
 oci-build-labels?=\
-	--build-arg OCI_IMAGE_CREATED=$(OCI_IMAGE_CREATED) 
+	--build-arg OCI_IMAGE_CREATED=$(OCI_IMAGE_CREATED) \
+	--build-arg OCI_IMAGE_VERSION=$(OCI_IMAGE_VERSION) \
+	--build-arg OCI_IMAGE_REVISION=$(OCI_IMAGE_REVISION) 
 
 .PHONY: mod go-telnet-local localdev productiondev rickrolld run container runcontainer clean buildx release
 
@@ -40,13 +46,13 @@ productiondev:
 rickrolld: 
 	mkdir -p dist
 	go mod tidy
-	CGO_ENABLED=0 go build -o dist/$(BINARYNAME) ./rickrolld/main.go
+	cd rickrolld && CGO_ENABLED=0 go build -o ../dist/$(BINARYNAME) .
 
 run: rickrolld
 	./dist/$(BINARYNAME) -v
 
 container:
-	docker build . -t nugget/rickrolld:dev --load
+	docker build $(oci-build-labels) . -t nugget/rickrolld:dev --load
 
 runcontainer: container
 	docker run -p 23:23 nugget/rickrolld:dev

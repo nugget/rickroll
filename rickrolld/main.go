@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"syscall"
@@ -240,10 +241,15 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 
 	setupLogger(ctx, stdout)
 
+	commit, buildDate, dirty := getBuildInfo()
+
 	logger.Info("Starting Rickroll",
 		"filename", filename,
 		"delayWord", delayWord,
-		"delayLine", delayLine)
+		"delayLine", delayLine,
+		"commit", commit,
+		"buildDate", buildDate,
+		"dirty", dirty)
 
 	err := LaunchTelnetServer(ctx)
 	if err != nil {
@@ -253,6 +259,27 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 	logger.Info("Done")
 
 	return nil
+}
+
+func getBuildInfo() (commit, buildDate string, dirty bool) {
+	buildInfo, ok := debug.ReadBuildInfo()
+
+	if !ok {
+		return
+	}
+	dirty = false
+	for _, setting := range buildInfo.Settings {
+		switch setting.Key {
+		case "vcs.revision":
+			commit = setting.Value
+		case "vcs.time":
+			buildDate = setting.Value
+		case "vcs.modified":
+			dirty = true
+		}
+	}
+
+	return
 }
 
 func setupLogger(ctx context.Context, stdout io.Writer) {
