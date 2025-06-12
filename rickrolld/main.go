@@ -25,7 +25,7 @@ var (
 	target      string
 	matchLogger *slog.Logger
 
-	filename  string        = "lyrics.dat"
+	filename  string        = "/data/lyrics.dat"
 	delayWord time.Duration = 200 * time.Millisecond
 	delayLine time.Duration = 1000 * time.Millisecond
 )
@@ -37,6 +37,8 @@ func LyricsFromFile(filename string) (r *bufio.Reader, err error) {
 	}
 
 	r = bufio.NewReader(bytes.NewBuffer(b))
+
+	logger.Info("loaded lyrics from file", "file", filename, "bytes", len(b))
 	return r, nil
 }
 

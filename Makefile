@@ -1,7 +1,24 @@
+PROJECT?=rickrolld
+REGISTRY?=docker.io
+LIBRARY=nugget
+
+image=$(REGISTRY)/$(LIBRARY)/$(PROJECT)
+
+platforms=linux/amd64,linux/arm64
+
 BINARYNAME?=rickrolld
 PWD?=`pwd`
 
-.PHONY: mod rickrolld
+prodtag=latest
+devtag=dev
+builder=builder-$(PROJECT)
+
+OCI_IMAGE_CREATED="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+oci-build-labels?=\
+	--build-arg OCI_IMAGE_CREATED=$(OCI_IMAGE_CREATED) 
+
+.PHONY: mod go-telnet-local localdev productiondev rickrolld run container runcontainer clean buildx release
 
 mod:
 	go get -u github.com/nugget/go-telnet
@@ -22,6 +39,35 @@ productiondev:
 
 rickrolld: 
 	mkdir -p dist
-	clearbuffer && go mod tidy && go build -o dist/$(BINARYNAME) ./rickrolld/main.go
+	go mod tidy
+	CGO_ENABLED=0 go build -o dist/$(BINARYNAME) ./rickrolld/main.go
+
+run: rickrolld
 	./dist/$(BINARYNAME) -v
+
+container:
+	docker build . -t nugget/rickrolld:dev --load
+
+runcontainer: container
+	docker run -p 23:23 nugget/rickrolld:dev
+
+clean:
+	@echo "# making: clean"
+	-docker buildx rm $(builder)
+	@echo
+
+buildx:
+	docker buildx create --name $(builder)
+	docker buildx use $(builder)
+	docker buildx install
+	@echo
+
+release: buildx
+	@echo "# making: prod"
+	docker buildx use $(builder)
+	docker buildx build $(oci-build-labels) -t $(image):$(prodtag) $(FROM_IMAGE_TAGARGS) --platform=$(platforms) --push . 
+	docker buildx rm $(builder)
+	docker pull $(image):$(prodtag)
+	docker inspect $(image):$(prodtag) | jq '.[0].Config.Labels' 
+	@echo 
 
