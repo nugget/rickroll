@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -169,8 +170,20 @@ func setupLogger(ctx context.Context, stdout io.Writer) {
 	logger = slog.New(handler)
 }
 
+func cleanup() {
+	logger.Info("Interrupt detected, exiting")
+}
+
 // main does as little as we can get away with.
 func main() {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		cleanup()
+		os.Exit(1)
+	}()
+
 	ctx := context.Background()
 
 	if err := run(ctx, os.Stdout, os.Stderr, os.Getenv, os.Args); err != nil {
