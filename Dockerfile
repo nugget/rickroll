@@ -6,6 +6,6 @@ RUN make rickrolld
 
 FROM scratch
 COPY --from=builder /build/dist/rickrolld /bin/rickrolld
-COPY --from=builder /build/lyrics.dat /data/lyrics.dat
+COPY --from=builder /build/lyrics.dat /lyrics.dat
 EXPOSE 23
 ENTRYPOINT ["/bin/rickrolld"]
