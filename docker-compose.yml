@@ -1,0 +1,7 @@
+services:
+  rickrolld:
+    image: nugget/rickrolld:latest
+    container_name: rickrolld
+    restart: unless-stopped
+    ports:
+      - "23:23"
