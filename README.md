@@ -61,6 +61,18 @@ make container
 make runcontainer
 ```
 
+# Configuration
+
+These environment variables can be set to override default values:
+
+```.env
+# string form of address (for example, "192.0.2.1:25", "[2001:db8::1]:80")
+RICKROLL=LISTEN_ADDR=:23
+
+# path to the lyrics file
+RICKROLL_LYRICS_FILENAME=lyrics.dat
+```
+
 [Rickrolling]: https://en.wikipedia.org/wiki/Rickrolling
 [inetd]: https://man.freebsd.org/cgi/man.cgi?inetd
 [tcpwrappers]: https://en.wikipedia.org/wiki/TCP_Wrappers
