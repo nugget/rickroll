@@ -25,21 +25,22 @@ var (
 	logLevel    *slog.LevelVar
 	target      string
 	matchLogger *slog.Logger
-
-	filename  string        = "lyrics.dat"
-	delayWord time.Duration = 200 * time.Millisecond
-	delayLine time.Duration = 1000 * time.Millisecond
-
 	lyricsBytes []byte
+
+	listenAddr     string        = ":23"
+	lyricsFilename string        = "lyrics.dat"
+	gitVersion     string        = "unknown"
+	delayWord      time.Duration = 200 * time.Millisecond
+	delayLine      time.Duration = 1000 * time.Millisecond
 )
 
-func LoadLyricsFromFile(filename string) (err error) {
-	lyricsBytes, err = os.ReadFile(filename)
+func LoadLyricsFromFile(lyricsFilename string) (err error) {
+	lyricsBytes, err = os.ReadFile(lyricsFilename)
 	if err != nil {
 		return err
 	}
 
-	logger.Info("loaded lyrics from file", "file", filename, "bytes", len(lyricsBytes))
+	logger.Info("loaded lyrics from file", "file", lyricsFilename, "bytes", len(lyricsBytes))
 
 	return nil
 }
@@ -248,7 +249,7 @@ func (handler internalTelnetHandler) ServeTELNET(ctx telnet.Context, w telnet.Wr
 func LaunchTelnetServer(ctx context.Context) error {
 	logger.Info("starting telnet server")
 
-	err := telnet.ListenAndServe(":23", TelnetHandler)
+	err := telnet.ListenAndServe(listenAddr, TelnetHandler)
 	if err != nil {
 		return err
 	}
@@ -261,17 +262,22 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 	defer stop()
 
 	setupLogger(ctx, stdout)
+	setupEnv()
 
 	commit, buildDate, _ := getBuildInfo()
 
-	logger.Info("starting rickrolld",
-		"filename", filename,
-		"delayWord", delayWord,
-		"delayLine", delayLine,
-		"commit", commit,
-		"buildDate", buildDate)
+	logger.Info("initializing rickrolld",
+		"gitVersion", gitVersion,
+		"buildDate", buildDate,
+		"commit", commit)
 
-	err = LoadLyricsFromFile(filename)
+	logger.Info("starting rickrolld",
+		"listenAddr", listenAddr,
+		"lyricsFilename", lyricsFilename,
+		"delayWord", delayWord,
+		"delayLine", delayLine)
+
+	err = LoadLyricsFromFile(lyricsFilename)
 	if err != nil {
 		return err
 	}
@@ -281,19 +287,22 @@ func run(ctx context.Context, stdout io.Writer, stderr io.Writer, getenv func(st
 		return err
 	}
 
-	logger.Info("Done")
+	logger.Info("stopping rickrolld",
+		"gitVersion", gitVersion,
+		"buildDate", buildDate,
+		"commit", commit)
 
 	return nil
 }
 
-func getBuildInfo() (commit, buildDate string, dirty bool) {
+func getBuildInfo() (commit, buildDate string, modified bool) {
 	buildInfo, ok := debug.ReadBuildInfo()
 
 	if !ok {
 		return
 	}
 
-	dirty = false
+	modified = false
 
 	for _, setting := range buildInfo.Settings {
 		switch setting.Key {
@@ -302,11 +311,23 @@ func getBuildInfo() (commit, buildDate string, dirty bool) {
 		case "vcs.time":
 			buildDate = setting.Value
 		case "vcs.modified":
-			dirty = true
+			modified = true
 		}
 	}
 
 	return
+}
+
+func setupEnv() {
+	if e := os.Getenv("RICKROLL_LISTEN_ADDR"); e != "" {
+		listenAddr = e
+		logger.Info("listenAddr loaded from env", "listenAddr", listenAddr)
+	}
+
+	if e := os.Getenv("RICKROLL_LYRICS_FILENAME"); e != "" {
+		lyricsFilename = e
+		logger.Info("lyricsFilename loaded from env", "lyricsFilename", lyricsFilename)
+	}
 }
 
 func setupLogger(ctx context.Context, stdout io.Writer) {
@@ -320,7 +341,7 @@ func setupLogger(ctx context.Context, stdout io.Writer) {
 }
 
 func cleanup() {
-	logger.Info("Interrupt detected, exiting")
+	logger.Info("interrupting rickrolld", "gitVersion", gitVersion)
 }
 
 // main does as little as we can get away with.
@@ -330,7 +351,7 @@ func main() {
 	go func() {
 		<-c
 		cleanup()
-		os.Exit(1)
+		os.Exit(0)
 	}()
 
 	ctx := context.Background()

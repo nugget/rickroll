@@ -15,6 +15,7 @@ builder=builder-$(PROJECT)
 GIT ?= $(shell which git)
 PWD ?= $(shell pwd)
 
+
 OCI_IMAGE_CREATED="$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")"
 OCI_IMAGE_REVISION?="$(shell $(GIT) rev-parse HEAD)"
 OCI_IMAGE_VERSION?="$(shell $(GIT) describe --always --long --tags --dirty)"
@@ -28,10 +29,13 @@ oci-version-point=$(shell echo $(OCI_IMAGE_VERSION) | cut -f 2 -d v | cut -f 1 -
 oci-version-minor=$(shell echo $(oci-version-point) | cut -f 1-2 -d .)
 oci-version-major=$(shell echo $(oci-version-point) | cut -f 1 -d .)
 
+LD_FLAGS="-X 'main.gitVersion=$(OCI_IMAGE_VERSION)'"
+
 .PHONY: version mod go-telnet-local localdev productiondev rickrolld run container runcontainer clean buildx release
 
 version:
 	@echo "OCI Version: $(OCI_IMAGE_VERSION)"
+	@echo "LD_FLAGS: $(LD_FLAGS)"
 
 mod:
 	go get -u github.com/nugget/go-telnet
@@ -53,7 +57,7 @@ productiondev:
 rickrolld: 
 	mkdir -p dist
 	go mod tidy
-	cd rickrolld && CGO_ENABLED=0 go build -o ../dist/$(BINARYNAME) .
+	cd rickrolld && CGO_ENABLED=0 go build -ldflags=$(LD_FLAGS) -o ../dist/$(BINARYNAME) .
 
 run: rickrolld
 	./dist/$(BINARYNAME) -v
