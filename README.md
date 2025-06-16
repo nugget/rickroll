@@ -1,32 +1,39 @@
-# Trolling telnet.
+# Trolling telnet (ft. rickrolld)
 
-You can `telnet macnugget.org` to see it in action.
+```sh
+telnet macnugget.org
+```
 
-If your host doesn't have the telnet client installed, good for you. You can also
-use Netcat to access the service with the command `nc macnugget.org 23`
+If your machine doesn't have telnet installed, good for you. You can also use
+Netcat to connect.
+
+```sh
+nc macnugget.org 23
+```
 
 # What is this? Whose fault is this?
 
-I honestly don't remember what was going through my head in 2013 when I wrote
-the original version of this server in Tcl 8.5 and set it up to run on one of
-my FreeBSD servers. I'm sure I felt then -- as I do now -- that it represents
-the pinnacle of [Rickrolling] humor.
+I honestly don't remember what exactly was going through my head in 2013 when I
+wrote the original version of this service. I imagine that I felt then -- as I
+do now -- that rickrolld represents the zenith of [Rickrolling] humor.
 
-In 2022 I decommissioned the last of my FreeBSD servers which had the required
-enviroment to host a Tcl script which relied on [inetd], [tcpwrappers], and
-[tcllauncher] to function. Sadly, `telnet macnugget.org` died that day. Only
-the code remained as an archeological examination of how we used to do things
-back in the olden days of UNIX before the rise of Linux and containers.
+rickrolld was written in Tcl 8.5 and was bespoke to my favored-at-the-time
+FreeBSD environment. The script relied on [inetd], [tcpwrappers], and
+[tcllauncher] to function. In 2022 I decommissioned the last of my those
+FreeBSD servers and lost the enviroment I needed to keep rickrolld running.
+Sadly, rickrolld died that day.
 
-It was a different world [back then](https://github.com/nugget/rickroll/tree/02f031511578bc33fd5b3df10f857620042bc857).
+## Version 2.0 Rewrite
 
-It's old enough to have been 3-Clause BSD licensed. I remember I had strong
-feelings about that at the time. I changed it to MIT as part of the rewrite.
+In June 2025 I rewrote the server in Golang and got it containerized for an
+easier deployment in modern infrastructure.
 
-# Version 2.0 Rewrite
+[The code from back then] is a time capsule from a different era. From before
+Linux and containers took over the Internet. It's old enough to have been
+3-Clause BSD licensed. I remember having strong feelings about that at the
+time. I changed it to MIT as part of the rewrite.
 
-In June 2025 I rewrote the server in Golang and got it containerized for an easier
-deployment in modern infrastructure.
+# Description
 
 This service will bind port 23 and listen as a telnet server. Incoming
 connections will be textually serenaded.
@@ -41,7 +48,8 @@ make run
 
 # Containerized
 
-Images are on dockerhub at [nugget/rickrolld](https://hub.docker.com/r/nugget/rickrolld)
+Images are on dockerhub at
+[nugget/rickrolld](https://hub.docker.com/r/nugget/rickrolld)
 
 ```sh
 docker run -p 23:23 nugget/rickrolld
@@ -73,6 +81,7 @@ RICKROLL_LISTEN_ADDR=:23
 RICKROLL_LYRICS_FILENAME=lyrics.dat
 ```
 
+[The code from back then]: https://github.com/nugget/rickroll/tree/02f031511578bc33fd5b3df10f857620042bc857
 [Rickrolling]: https://en.wikipedia.org/wiki/Rickrolling
 [inetd]: https://man.freebsd.org/cgi/man.cgi?inetd
 [tcpwrappers]: https://en.wikipedia.org/wiki/TCP_Wrappers
