@@ -26,7 +26,8 @@ Sadly, rickrolld died that day.
 ## Version 2.0 Rewrite
 
 In June 2025 I rewrote the server in Golang and got it containerized for an
-easier deployment in modern infrastructure.
+easier deployment in modern infrastructure. Special thanks to [Michael Hazell]
+for reminding me to get it finished.
 
 [The code from back then] is a time capsule from a different era. From before
 Linux and containers took over the Internet. It's old enough to have been
@@ -86,3 +87,4 @@ RICKROLL_LYRICS_FILENAME=lyrics.dat
 [inetd]: https://man.freebsd.org/cgi/man.cgi?inetd
 [tcpwrappers]: https://en.wikipedia.org/wiki/TCP_Wrappers
 [tcllauncher]: https://github.com/flightaware/tcllauncher
+[Michael Hazell]: https://github.com/Techman
