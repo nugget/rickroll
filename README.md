@@ -19,13 +19,13 @@ do now -- that rickrolld represents the zenith of [Rickrolling] humor.
 
 rickrolld was written in Tcl 8.5 and was bespoke to my favored-at-the-time
 FreeBSD environment. The script relied on [inetd], [tcpwrappers], and
-[tcllauncher] to function. In 2022 I decommissioned the last of my those
-FreeBSD servers and lost the enviroment I needed to keep rickrolld running.
-Sadly, rickrolld died that day.
+[tcllauncher] to function. In 2022 I decommissioned the last of my FreeBSD
+servers and lost the enviroment I needed to keep rickrolld running and it
+went silent.
 
 ## Version 2.0 Rewrite
 
-In June 2025 I rewrote the server in Golang and got it containerized for an
+In June 2025 I rewrote the server in Golang, then got it containerized for an
 easier deployment in modern infrastructure. Special thanks to [Michael Hazell]
 for reminding me to get it finished.
 
@@ -41,7 +41,8 @@ connections will be textually serenaded.
 
 # Local Operation
 
-You can build and run locally straight from this repo if you have Golang installed.
+You can build and run locally straight from this repo if you have Golang
+installed.
 
 ```sh
 make run
